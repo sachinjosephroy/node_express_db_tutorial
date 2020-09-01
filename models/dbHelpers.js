@@ -1,7 +1,8 @@
 //This is where we write the knex queries
-const knex = require('knex');
+/* const knex = require('knex');
 const config = require('../knexfile');
-const db = knex(config.development);
+const db = knex(config.development); */
+const db = require('../dbConfig');
 
 //add, find, findById, remove, update <- these are the functions we need to write in this file
 
@@ -10,7 +11,10 @@ module.exports = {
     find,
     findById,
     remove,
-    update
+    update,
+    addMessage,
+    findLessonMessages,
+    removeMessage
 }
 
 async function add(lesson) {
@@ -41,4 +45,36 @@ async function update(id, changes) {
         .then(() => {
             return findById(id);
         });
+}
+
+async function findMessageById(id) {
+    return db('messages')
+        .where({ id })
+        .first();
+}
+
+async function addMessage(message, lesson_id) {
+    const [id] = await db('messages')
+        .where({ lesson_id })
+        .insert(message);
+    return findMessageById(id);
+}
+
+async function findLessonMessages(lesson_id) {
+    return db('lessons as l')
+        .join('messages as m', 'l.id', 'm.lesson_id')
+        .select(
+            'l.id as LessonID',
+            'l.name as LessonName',
+            'm.id as MessageID',
+            'm.sender',
+            'm.text'
+        )
+        .where({ lesson_id });
+}
+
+async function removeMessage(id) {
+    return db('messages')
+        .where({ id })
+        .del();
 }
